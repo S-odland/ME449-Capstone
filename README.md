@@ -6,7 +6,8 @@ General assignments of ME449 can be found [here](https://github.com/S-odland/ME4
 ## This project is broken down into 3 milestones:
 ### Milestone 1 - youBot Kinematics Simulator and csv output
 ### Milestone 2 - Reference Trajectory Generation
-* My code for this milestone contains two functions:
+* My code for this milestone contains three functions:
+  * scTose(): this function computes the transformation matrices in the end effector frame from those given in the cube frame
   * InitTG(): this function just sets up the various transformation matrices for the gripper and cube
   * TrajectoryGenerator(): This function computes the trajectories by:
     * Iterating through the eight segments defined in traj_iter
