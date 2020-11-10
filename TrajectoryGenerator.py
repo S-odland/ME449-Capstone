@@ -4,6 +4,22 @@ import modern_robotics as mr
 import numpy as np
 import math as m 
 
+################## EXECUTING CODE DIRECTIONS ################
+#### OPTION 1 - CUT AND PASTABLE COMMENT ####
+## 1. Open up a python termial in the directory that you have this file downloaded to
+## 2. type or copy and paste the following code:
+##
+## import TrajectoryGenerator as TG
+## TG.TrajectoryGenerator()
+##
+## 3. That's it
+##
+#### OPTION 2 ####
+## 1. Open this file in Visual Studio Code
+## 2. Run it (I call the function TrajectoryGenerator at the end of the file)
+## 3. That's it
+#############################################################
+
 ## This file generates a reference trajectory for the end-effector frame {e}. The trajectory consists of 
 ## eight concatenated trahectory segments beginning and ending at rest.
 
