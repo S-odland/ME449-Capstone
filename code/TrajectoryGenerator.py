@@ -54,6 +54,8 @@ import math as m
 
 ## scene duration total 4+1+1+1+8+1+1+1 = 18 = N
 
+# initializes all the transformation matrices needed
+# right now I hardcode Tse_standoff and grip but I will try to get those created from Tsc_standoff and grip
 def InitTG():
 
     eOffset = 0.075
@@ -74,24 +76,28 @@ def InitTG():
 
     return Tse_initial,Tse_standoffInit,Tse_gripInit,Tse_standoffFinal,Tse_gripFinal
 
+# the bulk of the code
 def TrajectoryGenerator():
 
+# calls InitTG to assign these transformation matrices
     Tse_initial,Tse_standoffInit,Tse_gripInit,Tse_standoffFinal,Tse_gripFinal = InitTG()
 
+# Xstarts and Xends to iterate through as inputs to ScrewTrajectory
     traj_iter = np.array([Tse_initial,Tse_standoffInit,Tse_gripInit,Tse_gripInit,Tse_standoffInit,Tse_standoffFinal, \
                                                                 Tse_gripFinal,Tse_gripFinal, Tse_standoffFinal])
-    
+    k = 1
     grip_states = 0
     t = np.array([4,1,1,1,8,1,1,1]) # durations for each segment of the total trajectory
     trajectories = []
     gState = 0
     
+# iterating through the eight segments of the simulation
     for i in range(0,len(traj_iter)-1):
 
         Xstart = traj_iter[i]
         Xend = traj_iter[i+1]
         Tf = t[i]
-        N = Tf/0.01
+        N = k*Tf/0.01
 
         if i == 2 or i == 6:
             gState = not gState
@@ -107,6 +113,7 @@ def TrajectoryGenerator():
 
             trajectories.append(traj[i])
     
+# creates the csv file for CoppeliaSim
     f = open("trajectory.csv", "w") 
     
     for i in range(0,len(trajectories)):
@@ -119,6 +126,6 @@ def TrajectoryGenerator():
         f.write(trajectory)
     f.close()
 
-
+# calls the function above if you choose to run it in Visual Studio 
 TrajectoryGenerator()
 
