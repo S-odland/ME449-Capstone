@@ -19,5 +19,5 @@ General assignments of ME449 can be found [here](https://github.com/S-odland/ME4
 '''python
 import TrajectoryGenerator as TG
 TG.TrajectoryGenerator()
- '''
+'''
 ### Milestone 3 - Feedforward Control
