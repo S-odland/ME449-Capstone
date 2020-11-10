@@ -16,10 +16,11 @@ General assignments of ME449 can be found [here](https://github.com/S-odland/ME4
     * After this the csv file is creates
 * Running the code can be done in two ways:
   * The first is by running this command from a python terminal in the directory where TrajectoryGenerator.py is
-  * The second is by running the file in Visual Studio Code
 ```python
 import TrajectoryGenerator as TG
 TG.TrajectoryGenerator()
-```
+```  
+  * The second is by running the file in Visual Studio Code
+
 
 ### Milestone 3 - Feedforward Control
