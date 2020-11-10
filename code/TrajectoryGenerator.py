@@ -54,11 +54,12 @@ import math as m
 
 ## scene duration total 4+1+1+1+8+1+1+1 = 18 = N
 
-# initializes all the transformation matrices needed
+# computes transformation matrices in the end effector frame
 def scTose(Tsc,Tce):
     Tse = np.matmul(Tsc,Tce)
     return Tse
 
+# initializes all the transformation matrices needed
 def InitTG():
 
     eOffset = 0.075
