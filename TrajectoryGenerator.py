@@ -86,10 +86,10 @@ def TrajectoryGenerator():
 
         for i in range(0,len(traj)):
 
-            if i != 2 or i != 6:
-                grip_states = np.vstack([grip_states,0])
-            else:
+            if i == 2 or i == 6:
                 grip_states = np.vstack([grip_states,1])
+            else:
+                grip_states = np.vstack([grip_states,0])
 
             traj_states.append(traj[i])
     
