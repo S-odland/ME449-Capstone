@@ -55,24 +55,25 @@ import math as m
 ## scene duration total 4+1+1+1+8+1+1+1 = 18 = N
 
 # initializes all the transformation matrices needed
-# right now I hardcode Tse_standoff and grip but I will try to get those created from Tsc_standoff and grip
+def scTose(Tsc,Tce):
+    Tse = np.matmul(Tsc,Tce)
+    return Tse
+
 def InitTG():
 
     eOffset = 0.075
 
-    # Tsc_initial = np.array([[1,0,0,1],[0,1,1,0],[0,0,1,0.025],[0,0,0,2]]) # initial configuration of cube
-    # Tsc_final = np.array([[0,1,0,0],[-1,0,0,-1],[0,0,1,0.025],[0,0,0,1]]) # final configuration of cube
-
+    Tsc_initial = np.array([[1,0,0,1],[0,1,0,0],[0,0,1,0.025],[0,0,0,1]]) # initial configuration of cube
+    Tsc_final = np.array([[0,1,0,0],[-1,0,0,-1],[0,0,1,0.025],[0,0,0,1]]) # final configuration of cube
     Tse_initial = np.array([[1,0,0,0],[0,1,0,0],[0,0,1,0.5],[0,0,0,1]]) # initial configuration of the gripper
+    Tce_standoff = np.array([[-0.7071,0,-0.7071,0],[0,1,0,0],[0.7071,0,-0.7071,eOffset],[0,0,0,1]]) # standoff configuration 
+    Tce_grip = np.array([[-0.7071,0,-0.7071,0],[0,1,0,0],[0.7071,0,-0.7071,0],[0,0,0,1]])
 
-    # Tce_standoff = np.array([[-0.7071,0,-0.7071,0],[0,1,0,0],[0.7071,0,-0.7071,eOffset],[0,0,0,1]]) # standoff configuration 
-    # Tce_grip = np.array([[-0.7071,0,-0.7071,0],[0,1,0,0],[0.7071,0,-0.7071,0],[0,0,0,1]])
+    Tse_standoffInit = scTose(Tsc_initial,Tce_standoff)
+    Tse_gripInit = scTose(Tsc_initial,Tce_grip)
 
-    Tse_standoffInit = np.array([[-0.7071,0,0.7071,1],[0,1,0,0],[-0.7071,0,-0.7071,eOffset+0.025],[0,0,0,1]])
-    Tse_gripInit = np.array([[-0.7071,0,0.7071,1],[0,1,0,0],[-0.7071,0,-0.7071,0.025],[0,0,0,1]])
-
-    Tse_standoffFinal = np.array([[0,1,0,0],[0.7071,0,-0.7071,-1],[-0.7071,0,-0.7071,eOffset+0.025],[0,0,0,1]])
-    Tse_gripFinal = np.array([[0,1,0,0],[0.7071,0,-0.7071,-1],[-0.7071,0,-0.7071,0.025],[0,0,0,1]])
+    Tse_standoffFinal = scTose(Tsc_final,Tce_standoff)
+    Tse_gripFinal = scTose(Tsc_final,Tce_grip)
 
     return Tse_initial,Tse_standoffInit,Tse_gripInit,Tse_standoffFinal,Tse_gripFinal
 
