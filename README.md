@@ -1,4 +1,4 @@
-# Robot_Manipulation-Capstone
+# Robotic-Manipulation-Capstone
 Final Capstone Project of ME449 Introduction to Robotic Manipulation
 
 General assignments of ME449 can be found [here](https://github.com/S-odland/ME449-RoboticManipulation)
