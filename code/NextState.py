@@ -43,4 +43,10 @@ def NextState(curConfig,controls,del_t,limits):
     ##     ## we have the 4 wheel speeds
     ##     ## we have the current chassis configuration
 
-    
+    ## YouBot Properties:
+    gamma = [-m.pi/4,m.pi/4,-m.pi/4,m.pi/4] ## free sliding angles of the wheels
+    l = 0.47/2
+    w = 0.3/2
+    r = 0.0475
+
+    ## we have the u vector and r and the H(0) vector --> we can find wbz, vbx, vby
