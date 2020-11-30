@@ -16,3 +16,6 @@ import NextState as NS
 ##    trajectory, Xd,next(Tse,d,next) at a timestep delta_t later
 ## 4. The PI gain matrices Kp and Ki
 ## 5. The timestep delta_t between reference trajectory configurations
+
+## OUTPUT ##
+## The commanded end-effector twist V expressed in the end-effector frame {e}
