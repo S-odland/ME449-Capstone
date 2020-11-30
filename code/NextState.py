@@ -23,7 +23,7 @@ import math as m
 ## - new chassis configuration is obtained from odometry (ch. 13.4)
 
 def NextState(curConfig,controls,del_t,limits):
-
+    nextState = []
     curJointConfig = np.array(curConfig[4:8])
     curChassisConfig = np.array(curConfig[0:3])
     curWheelConfig = np.array(curConfig[9:12])
@@ -57,7 +57,26 @@ def NextState(curConfig,controls,del_t,limits):
     Vb = Hinv*wheelSpeeds
 
     nextChassisConfig = curChassisConfig + Vb*del_t
+    nextConfig = [list(nextChassisConfig),list(nextJointConfig),list(nextWheelConfig)]
+    for i,n in nextConfig:
+        nextState[i] = n
 
-    return nextChassisConfig,nextJointConfig,nextWheelConfig
+    return nextState
 
+def simControls(curConfig,controls,del_t,limits):
+    robotConfigs = curConfig
+    for i in range(1/del_t):
+        curConfig = NextState(curConfig,controls,del_t,limits)
+        robotConfigs.append(curConfig)
     
+        f = open("nextstate.csv", "w") 
+    
+    for i in range(0,len(robotConfigs)):
+        T = robotConfigs[i]
+        nextstate = "%7.6f,%7.6f,%7.6f,%7.6f,%7.6f,%7.6f,%7.6f,%7.6f,%7.6f,%7.6f,%7.6f,%7.6f,%d\n" % \
+                                        (T[0][0],T[0][1],T[0][2],T[1][0],T[1][1],T[1][2],T[2][0],T[2][1],\
+                                          T[2][2],T[0][3],T[1][3],T[2][3],0)
+        f.write(nextstate)
+    f.close()
+    
+        
