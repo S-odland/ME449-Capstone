@@ -6,6 +6,10 @@ import math as m
 import pandas as pd
 import itertools
 
+################## EXECUTING CODE ####################
+## Type: `python NextState.py` in command line in the directory where this file exists
+######################################################
+
 ## INPUTS ##
 ## 1. A 12-vector representing the current configuration of the robot (3 variables for the 
 ##    chassis configuration, 5 variables for the arm configuration and 4 variables for the
@@ -35,11 +39,12 @@ def NextState(curConfig,controls,del_t,limits):
     jointSpeeds = np.array(controls[0:5])
     u = np.array(controls[5:])
 
+    ## checking limits
     for i in range(len(controls)): 
         if controls[i] > limits: controls[i] = limits
         elif controls[i] < -limits: controls[i] = -limits
-    #print(controls)
 
+    ## Euler step for joints and wheels
     nextJointConfig = curJointConfig + jointSpeeds*del_t
     nextWheelConfig = curWheelConfig + u*del_t
 
@@ -49,6 +54,7 @@ def NextState(curConfig,controls,del_t,limits):
     r = 0.0475
     phi_k = q_cur[0]
 
+    ## Odometry calculations for chassis Euler step
     F = (r/4)*np.array([[-1/(l+w), 1/(l+w), 1/(l+w),-1/(l+w)],[1, 1, 1, 1],[-1, 1, -1, 1]])
     del_theta = u*del_t
     Vb = np.dot(F,del_theta)
@@ -75,6 +81,7 @@ def NextState(curConfig,controls,del_t,limits):
 
     return nextState
 
+## 1 second simulation of states
 def simControls(curConfig,controls,del_t,limits):
     robotConfigs = list(np.zeros(int(1/del_t)))
     for i in range(0,int(1/del_t)):
@@ -86,6 +93,7 @@ def simControls(curConfig,controls,del_t,limits):
        
     return robotConfigs
 
+## executable for function
 if __name__ == '__main__':
     del_t = 0.01
     limits = 10
