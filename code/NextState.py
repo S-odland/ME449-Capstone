@@ -24,12 +24,11 @@ import math as m
 
 def NextState(curConfig,controls,del_t,limits):
 
-    lim_range = [-limits,limits] ## max angular speeds of wheels and arm joints
-    curJointConfig = curConfig[3:7]
-    curChassisConfig = curConfig[0:2]
-    curWheelConfig = curConfig[8:11]
-    jointSpeeds = controls[0:4]
-    wheelSpeeds = controls[5:8]
+    curJointConfig = np.array(curConfig[4:8])
+    curChassisConfig = np.array(curConfig[0:3])
+    curWheelConfig = np.array(curConfig[9:12])
+    jointSpeeds = np.array(controls[0:5])
+    wheelSpeeds = np.array(controls[6:9])
 
     for i, c in controls: 
         if c > limits: controls[i] = limits
@@ -44,9 +43,21 @@ def NextState(curConfig,controls,del_t,limits):
     ##     ## we have the current chassis configuration
 
     ## YouBot Properties:
-    gamma = [-m.pi/4,m.pi/4,-m.pi/4,m.pi/4] ## free sliding angles of the wheels
     l = 0.47/2
     w = 0.3/2
     r = 0.0475
 
     ## we have the u vector and r and the H(0) vector --> we can find wbz, vbx, vby
+    ## u = H*Vb
+    ## u = (1/r) * [[-l-w 1 -1][l+w 1 1][l+w 1 -1][-l-w 1 1]][wbz; vbx; vby]
+
+    H = (1/r)*np.array([[-l-w, 1, -1],[l+w, 1, 1],[l+w, 1, -1],[-l-w, 1, 1]])
+    Hinv = np.linalg.inv(H)
+
+    Vb = Hinv*wheelSpeeds
+
+    nextChassisConfig = curChassisConfig + Vb*del_t
+
+    return nextChassisConfig,nextJointConfig,nextWheelConfig
+
+    
