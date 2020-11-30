@@ -4,6 +4,16 @@ Final Capstone Project of ME449 Introduction to Robotic Manipulation
 General assignments of ME449 can be found [here](https://github.com/S-odland/ME449-RoboticManipulation)
 
 ### Milestone 1 - youBot Kinematics Simulator and csv output
+* My code for this milestion contains three functions:
+  * writeCSV(): writes a .csv file
+  * NextState(): computes the next state of the robot configuration
+  * simControl(): simulates a second of robot manipulation (wheels, joints and chassis)
+* To execute this code, navigate to where the file is downloaded and type this into the command line:
+
+```python
+python NextState.py
+```
+
 ### Milestone 2 - Reference Trajectory Generation
 * My code for this milestone contains three functions:
   * scTose(): this function computes the transformation matrices in the end effector frame from those given in the cube frame
@@ -14,11 +24,9 @@ General assignments of ME449 can be found [here](https://github.com/S-odland/ME4
     * From these the inputs to ScrewTrajectory are generated
     * In each iteration the results of ScrewTrajectory are appending to a list of trajectories and the corresponding gripstates are appending to grip_states as well
     * After this the csv file is creates
-* Running the code can be done in two ways:
-  * The first is by running the command below from a python terminal in the directory where TrajectoryGenerator.py is
-  * The second is by running the file in Visual Studio Code
+* To execute this code, navigate to where the file is downloaded and type this into the command line:
+  
 ```python
-import TrajectoryGenerator as TG
-TG.TrajectoryGenerator()
+python TrajectoryGenerator.py
 ```  
 ### Milestone 3 - Feedforward Control
