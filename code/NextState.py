@@ -3,6 +3,8 @@
 import modern_robotics as mr 
 import numpy as np
 import math as m 
+import pandas as pd
+import itertools
 
 ## INPUTS ##
 ## 1. A 12-vector representing the current configuration of the robot (3 variables for the 
@@ -21,18 +23,21 @@ import math as m
 ## - new arm joints = (old arm joints) + (joint speeds) * delta_t
 ## - new wheel angles = (old wheel angles) + (wheel speeds) * delta_t
 ## - new chassis configuration is obtained from odometry (ch. 13.4)
+def writeCSV(line):
+    data = pd.DataFrame(line)
+    data.to_csv("nextstate",header=False,index=False)
 
 def NextState(curConfig,controls,del_t,limits):
     nextState = []
-    curJointConfig = np.array(curConfig[4:8])
+    curJointConfig = np.array(curConfig[3:8])
     curChassisConfig = np.array(curConfig[0:3])
-    curWheelConfig = np.array(curConfig[9:12])
+    curWheelConfig = np.array(curConfig[8:])
     jointSpeeds = np.array(controls[0:5])
-    wheelSpeeds = np.array(controls[6:9])
+    wheelSpeeds = np.array(controls[5:])
 
-    for i, c in controls: 
-        if c > limits: controls[i] = limits
-        elif c < -limits: controls[i] = -limits
+    for i in range(len(controls)-1): 
+        if controls[i] > limits: controls[i] = limits
+        elif controls[i] < -limits: controls[i] = -limits
 
     nextJointConfig = curJointConfig + jointSpeeds*del_t
     nextWheelConfig = curWheelConfig + wheelSpeeds*del_t
@@ -52,31 +57,29 @@ def NextState(curConfig,controls,del_t,limits):
     ## u = (1/r) * [[-l-w 1 -1][l+w 1 1][l+w 1 -1][-l-w 1 1]][wbz; vbx; vby]
 
     H = (1/r)*np.array([[-l-w, 1, -1],[l+w, 1, 1],[l+w, 1, -1],[-l-w, 1, 1]])
-    Hinv = np.linalg.inv(H)
+    Hinv = np.transpose(H)
 
-    Vb = Hinv*wheelSpeeds
+    Vb = np.dot(Hinv,wheelSpeeds)
 
     nextChassisConfig = curChassisConfig + Vb*del_t
     nextConfig = [list(nextChassisConfig),list(nextJointConfig),list(nextWheelConfig)]
-    for i,n in nextConfig:
-        nextState[i] = n
+    nextState = list(itertools.chain(*nextConfig))
 
     return nextState
 
 def simControls(curConfig,controls,del_t,limits):
-    robotConfigs = curConfig
-    for i in range(1/del_t):
+    robotConfigs = []
+    robotConfigs.append(curConfig)
+    for i in range(int(1/del_t)):
         curConfig = NextState(curConfig,controls,del_t,limits)
         robotConfigs.append(curConfig)
-    
-        f = open("nextstate.csv", "w") 
-    
-    for i in range(0,len(robotConfigs)):
-        T = robotConfigs[i]
-        nextstate = "%7.6f,%7.6f,%7.6f,%7.6f,%7.6f,%7.6f,%7.6f,%7.6f,%7.6f,%7.6f,%7.6f,%7.6f,%d\n" % \
-                                        (T[0][0],T[0][1],T[0][2],T[1][0],T[1][1],T[1][2],T[2][0],T[2][1],\
-                                          T[2][2],T[0][3],T[1][3],T[2][3],0)
-        f.write(nextstate)
-    f.close()
-    
+    writeCSV(robotConfigs)
+
+
+if __name__ == '__main__':
+    del_t = 0.01
+    limits = 5
+    controls = [0,0,0,0,0,10,10,10,10]
+    curConfig = [0,0,0,0,0,0,0,0,0,0,0,0]
+    simControls(curConfig,controls,del_t,limits)
         

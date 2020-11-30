@@ -128,6 +128,6 @@ def TrajectoryGenerator():
         f.write(trajectory)
     f.close()
 
-# calls the function above if you choose to run it in Visual Studio 
-TrajectoryGenerator()
+if __name__ == '__main__':
+    TrajectoryGenerator()
 
