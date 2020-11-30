@@ -60,16 +60,7 @@ def scTose(Tsc,Tce):
     return Tse
 
 # initializes all the transformation matrices needed
-def InitTG():
-
-    eOffset = 0.075
-
-    Tsc_initial = np.array([[1,0,0,1],[0,1,0,0],[0,0,1,0.025],[0,0,0,1]]) # initial configuration of cube
-    Tsc_final = np.array([[0,1,0,0],[-1,0,0,-1],[0,0,1,0.025],[0,0,0,1]]) # final configuration of cube
-    Tse_initial = np.array([[1,0,0,0],[0,1,0,0],[0,0,1,0.5],[0,0,0,1]]) # initial configuration of the gripper
-    Tce_standoff = np.array([[-0.7071,0,-0.7071,0],[0,1,0,0],[0.7071,0,-0.7071,eOffset],[0,0,0,1]]) # standoff configuration 
-    Tce_grip = np.array([[-0.7071,0,-0.7071,0],[0,1,0,0],[0.7071,0,-0.7071,0],[0,0,0,1]])
-
+def InitTG(Tsc_initial,Tsc_final,Tse_initial,Tce_standoff,Tce_grip):
     Tse_standoffInit = scTose(Tsc_initial,Tce_standoff)
     Tse_gripInit = scTose(Tsc_initial,Tce_grip)
 
@@ -79,10 +70,10 @@ def InitTG():
     return Tse_initial,Tse_standoffInit,Tse_gripInit,Tse_standoffFinal,Tse_gripFinal
 
 # the bulk of the code
-def TrajectoryGenerator():
+def TrajectoryGenerator(Tsc_initial,Tsc_final,Tse_initial,Tce_standoff,Tce_grip):
 
 # calls InitTG to assign these transformation matrices
-    Tse_initial,Tse_standoffInit,Tse_gripInit,Tse_standoffFinal,Tse_gripFinal = InitTG()
+    Tse_initial,Tse_standoffInit,Tse_gripInit,Tse_standoffFinal,Tse_gripFinal = InitTG(Tsc_initial,Tsc_final,Tse_initial,Tce_standoff,Tce_grip)
 
 # Xstarts and Xends to iterate through as inputs to ScrewTrajectory
     traj_iter = np.array([Tse_initial,Tse_standoffInit,Tse_gripInit,Tse_gripInit,Tse_standoffInit,Tse_standoffFinal, \
@@ -129,5 +120,11 @@ def TrajectoryGenerator():
     f.close()
 
 if __name__ == '__main__':
-    TrajectoryGenerator()
+    eOffset = 0.075
+    Tsc_initial = np.array([[1,0,0,1],[0,1,0,0],[0,0,1,0.025],[0,0,0,1]]) # initial configuration of cube
+    Tsc_final = np.array([[0,1,0,0],[-1,0,0,-1],[0,0,1,0.025],[0,0,0,1]]) # final configuration of cube
+    Tse_initial = np.array([[1,0,0,0],[0,1,0,0],[0,0,1,0.5],[0,0,0,1]]) # initial configuration of the gripper
+    Tce_standoff = np.array([[-0.7071,0,-0.7071,0],[0,1,0,0],[0.7071,0,-0.7071,eOffset],[0,0,0,1]]) # standoff configuration 
+    Tce_grip = np.array([[-0.7071,0,-0.7071,0],[0,1,0,0],[0.7071,0,-0.7071,0],[0,0,0,1]])
+    TrajectoryGenerator(Tsc_initial,Tsc_final,Tse_initial,Tce_standoff,Tce_grip)
 
