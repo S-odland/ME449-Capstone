@@ -9,6 +9,8 @@ import importlib
 import TrajectoryGenerator as TG
 import NextState as NS
 
+## V(t) = [Adx-1xd]Vd(t) + KpXerr(t) + Ki [Xerr(t)dt]0-->t
+
 ## INPUTS ##
 ## 1. The current actual end-effector configuration X (Tse)
 ## 2. The current end-effector reference configuration Xd (Tse,d)
@@ -19,3 +21,18 @@ import NextState as NS
 
 ## OUTPUT ##
 ## The commanded end-effector twist V expressed in the end-effector frame {e}
+
+def writeCSV(line):
+    data = pd.DataFrame(line)
+    data.to_csv("nextstate.csv",header=False,index=False)
+
+def genRef(curConfig,controls,del_t,limits):
+    refConfig = NS.simControls(curConfig,controls,del_t,limits)
+    return refConfig
+
+def main():
+    pass
+
+
+if __name__ == '__main__':
+    main()
