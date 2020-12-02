@@ -26,13 +26,14 @@ def writeCSV(line):
     data = pd.DataFrame(line)
     data.to_csv("nextstate.csv",header=False,index=False)
 
-def genRef(curConfig,controls,del_t,limits):
+def getRefTraj(curConfig,controls,del_t,limits):
     refConfig = NS.simControls(curConfig,controls,del_t,limits)
     return refConfig
 
-def main():
+def Control():
     pass
 
 
+
 if __name__ == '__main__':
-    main()
+    Control()
