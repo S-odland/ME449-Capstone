@@ -105,7 +105,10 @@ def TrajectoryGenerator(Tsc_initial,Tsc_final,Tse_initial,Tce_standoff,Tce_grip)
                 grip_states = np.vstack([grip_states,0])
 
             trajectories.append(traj[i])
-    
+
+    return trajectories
+
+def writeCSV(trajectories):
 # creates the csv file for CoppeliaSim
     f = open("trajectory.csv", "w") 
     
@@ -126,5 +129,6 @@ if __name__ == '__main__':
     Tse_initial = np.array([[1,0,0,0],[0,1,0,0],[0,0,1,0.5],[0,0,0,1]]) # initial configuration of the gripper
     Tce_standoff = np.array([[-0.7071,0,-0.7071,0],[0,1,0,0],[0.7071,0,-0.7071,eOffset],[0,0,0,1]]) # standoff configuration 
     Tce_grip = np.array([[-0.7071,0,-0.7071,0],[0,1,0,0],[0.7071,0,-0.7071,0],[0,0,0,1]])
-    TrajectoryGenerator(Tsc_initial,Tsc_final,Tse_initial,Tce_standoff,Tce_grip)
+    trajectories = TrajectoryGenerator(Tsc_initial,Tsc_final,Tse_initial,Tce_standoff,Tce_grip)
+    writeCSV(trajectories)
 
