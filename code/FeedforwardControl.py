@@ -21,6 +21,7 @@ import NextState as NS
 
 ## OUTPUT ##
 ## The commanded end-effector twist V expressed in the end-effector frame {e}
+
 def getConsts():
     B1 = np.array([0,0,1,0,0.033,0])
     B2 = np.array([0,-1,0,-0.5076,0,0])
@@ -39,17 +40,19 @@ def writeCSV(line):
     data.to_csv("nextstate.csv",header=False,index=False)
 
 def getActConfig(curConfig,controls,del_t,limits):
-    actConfig,F = NS.NextState(curConfig,controls,del_t,limits)
-    theta_cur = np.array(actConfig[3:8])
-    phi,x,y = np.array(actConfig[0:3])
-
+    l = 0.47/2
+    w = 0.3/2
+    r = 0.0475
+    theta_cur = np.array(curConfig[3:8])
+    phi,x,y = np.array(curConfig[0:3])
+    F = (r/4)*np.array([[-1/(l+w), 1/(l+w), 1/(l+w),-1/(l+w)],[1, 1, 1, 1],[-1, 1, -1, 1]])
     Blist,M,Tb0 = getConsts()
 
     T0e = mr.FKinBody(M,Blist,theta_cur)
     Tsb = np.array([[m.cos(phi),-m.sin(phi),0,x],[m.sin(phi),m.cos(phi),0,y],[0,0,1,0.0963],[0,0,0,1]])
 
     X = np.dot(Tsb,np.dot(Tb0,T0e))
-    return X
+    return X,theta_cur,F
 
 def getRefTraj():
     eOffset = 0.075
@@ -72,20 +75,17 @@ def init(kp,ki):
     controls = [0,0,0,0,0,0,0,0,0]
     curConfig = [0,0,0,0,0,0,0,0,0,0,0,0]
 
-    X = getActConfig(curConfig,controls,del_t,limits)
-    Xd,Xdn = getCurRef(getRefTraj(),0)
+    X,theta_cur,F = getActConfig(curConfig,controls,del_t,limits)
 
     Kp = kp*np.identity(5)
     Ki = ki*np.identity(5)
 
     Xerr_int_init = np.array([0,0,0,0,0,0])
 
-    return X,Xd,Xdn,Kp,Ki,del_t,Xerr_int_init
+    return X,Kp,Ki,del_t,Xerr_int_init,curConfig,theta_cur,F,controls,limits
 
-def getPsuedo(curConfig,controls,del_t,limits):
+def getPsuedo(F,theta_cur):
     Blist,M,Tb0 = getConsts()
-    actConfig,F = NS.NextState(curConfig,controls,del_t,limits)
-    theta_cur = np.array(actConfig[3:8])
     T0e = mr.FKinBody(M,Blist,theta_cur)
 
     Ja = mr.JacobianBody(Blist,theta_cur)
@@ -110,12 +110,14 @@ def FeedbackControl(X,Xd,Xdn,Kp,Ki,del_t,Xerr_int):
     V = np.dot(Adxxd,Vd) + np.dot(Kp,Xerr) + np.dot(Ki,Xerr_int)
 
     return V
-
-def calcControls(X,Xd,Xdn,Kp,Ki,del_t,Xerr_int,curConfig,controls,limits):
-    V = FeedbackControl(X,Xd,Xdn,Kp,Ki,del_t,Xerr_int)
-    pJe = getPsuedo(curConfig,controls,del_t,limits)
     
 if __name__ == '__main__':
-    X,Xd,Xdn,Kp,Ki,del_t,Xerr_int_init = init(20,100)
-    FeedbackControl(X,Xd,Xdn,Kp,Ki,del_t,Xerr_int_init)
+    X,Kp,Ki,del_t,Xerr_int,curConfig,theta_cur,F,controls,limits = init(20,100)
+    trajectories = getRefTraj()
+    Xd,Xdn = getCurRef(trajectories,0)
+    V = FeedbackControl(X,Xd,Xdn,Kp,Ki,del_t,Xerr_int)
+    pJe = getPsuedo(F,theta_cur)
+    controls = np.dot(pJe,V)
+    curConfig = NS.NextState(curConfig,controls,del_t,limits)
+        
     
