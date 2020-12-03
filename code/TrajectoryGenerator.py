@@ -79,7 +79,7 @@ def TrajectoryGenerator(Tsc_initial,Tsc_final,Tse_initial,Tce_standoff,Tce_grip)
     traj_iter = np.array([Tse_initial,Tse_standoffInit,Tse_gripInit,Tse_gripInit,Tse_standoffInit,Tse_standoffFinal, \
                                                                 Tse_gripFinal,Tse_gripFinal, Tse_standoffFinal])
     k = 1
-    grip_states = 0
+    grip_states = []
     t = np.array([4,1,1,1,8,1,1,1]) # durations for each segment of the total trajectory
     trajectories = []
     gState = 0
@@ -100,13 +100,13 @@ def TrajectoryGenerator(Tsc_initial,Tsc_final,Tse_initial,Tce_standoff,Tce_grip)
         for i in range(0,len(traj)):
 
             if gState:
-                grip_states = np.vstack([grip_states,1])
+                grip_states.append(1)
             else:
-                grip_states = np.vstack([grip_states,0])
+                grip_states.append(0)
 
             trajectories.append(traj[i])
 
-    return trajectories
+    return trajectories,grip_states
 
 def writeCSV(trajectories,grip_states):
 # creates the csv file for CoppeliaSim
@@ -122,13 +122,13 @@ def writeCSV(trajectories,grip_states):
         f.write(trajectory)
     f.close()
 
-# if __name__ == '__main__':
-#     eOffset = 0.075
-#     Tsc_initial = np.array([[1,0,0,1],[0,1,0,0],[0,0,1,0.025],[0,0,0,1]]) # initial configuration of cube
-#     Tsc_final = np.array([[0,1,0,0],[-1,0,0,-1],[0,0,1,0.025],[0,0,0,1]]) # final configuration of cube
-#     Tse_initial = np.array([[1,0,0,0],[0,1,0,0],[0,0,1,0.5],[0,0,0,1]]) # initial configuration of the gripper
-#     Tce_standoff = np.array([[-0.7071,0,-0.7071,0],[0,1,0,0],[0.7071,0,-0.7071,eOffset],[0,0,0,1]]) # standoff configuration 
-#     Tce_grip = np.array([[-0.7071,0,-0.7071,0],[0,1,0,0],[0.7071,0,-0.7071,0],[0,0,0,1]])
-#     trajectories = TrajectoryGenerator(Tsc_initial,Tsc_final,Tse_initial,Tce_standoff,Tce_grip)
-#     writeCSV(trajectories)
+if __name__ == '__main__':
+    eOffset = 0.075
+    Tsc_initial = np.array([[1,0,0,1],[0,1,0,0],[0,0,1,0.025],[0,0,0,1]]) # initial configuration of cube
+    Tsc_final = np.array([[0,1,0,0],[-1,0,0,-1],[0,0,1,0.025],[0,0,0,1]]) # final configuration of cube
+    Tse_initial = np.array([[0,0,1,0],[0,1,0,0],[-1,0,0,0.5],[0,0,0,1]]) # initial configuration of the gripper
+    Tce_standoff = np.array([[-0.7071,0,-0.7071,0],[0,1,0,0],[0.7071,0,-0.7071,eOffset],[0,0,0,1]]) # standoff configuration 
+    Tce_grip = np.array([[-0.7071,0,-0.7071,0],[0,1,0,0],[0.7071,0,-0.7071,0],[0,0,0,1]])
+    trajectories,grip_states = TrajectoryGenerator(Tsc_initial,Tsc_final,Tse_initial,Tce_standoff,Tce_grip)
+    writeCSV(trajectories,grip_states)
 

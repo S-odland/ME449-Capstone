@@ -66,7 +66,7 @@ def getPsuedo(F,theta_cur):
                        mr.Adjoint(np.linalg.inv(Tb0))),\
                 F6)
     Je = np.c_[Jb,Ja]
-    pJe = np.dot(Je.T,np.linalg.inv(np.dot(Je,Je.T)))
+    pJe = np.linalg.pinv(Je,0.001)
     
     return pJe
 
