@@ -5,7 +5,6 @@ import numpy as np
 import math as m 
 import pandas as pd
 import itertools
-import importlib
 import TrajectoryGenerator as TG
 import NextState as NS
 
@@ -33,7 +32,7 @@ def getConsts():
     T0e_init = np.array([[1,0,0,0.0330],[0,1,0,0],[0,0,1,0.6546],[0,0,0,1]])
     Tb0 = np.array([[1,0,0,0.1662],[0,1,0,0],[0,0,1,0.0026],[0,0,0,1]])
 
-    return Blist,T0e_init,Tb0
+    return Blist.T,T0e_init,Tb0
 
 def writeCSV(line):
     data = pd.DataFrame(line)
@@ -44,12 +43,16 @@ def getActConfig(curConfig,controls,del_t,limits):
     w = 0.3/2
     r = 0.0475
     theta_cur = np.array(curConfig[3:8])
+    print('theta:',theta_cur)
     phi,x,y = np.array(curConfig[0:3])
     F = (r/4)*np.array([[-1/(l+w), 1/(l+w), 1/(l+w),-1/(l+w)],[1, 1, 1, 1],[-1, 1, -1, 1]])
     Blist,M,Tb0 = getConsts()
 
     T0e = mr.FKinBody(M,Blist,theta_cur)
-    Tsb = np.array([[m.cos(phi),-m.sin(phi),0,x],[m.sin(phi),m.cos(phi),0,y],[0,0,1,0.0963],[0,0,0,1]])
+    Tsb = np.array([[m.cos(phi),-m.sin(phi),0,x],\
+                    [m.sin(phi),m.cos(phi),0,y],\
+                    [0,0,1,0.0963],\
+                    [0,0,0,1]])
 
     X = np.dot(Tsb,np.dot(Tb0,T0e))
     return X,theta_cur,F
@@ -69,55 +72,64 @@ def getCurRef(refTraj,i):
     Xdn = refTraj[i+1]
     return Xd,Xdn
 
-def init(kp,ki):
-    del_t = 0.01
-    limits = 10
-    controls = [0,0,0,0,0,0,0,0,0]
-    curConfig = [0,0,0,0,0,0,0,0,0,0,0,0]
-
-    X,theta_cur,F = getActConfig(curConfig,controls,del_t,limits)
-
-    Kp = kp*np.identity(5)
-    Ki = ki*np.identity(5)
-
-    Xerr_int_init = np.array([0,0,0,0,0,0])
-
-    return X,Kp,Ki,del_t,Xerr_int_init,curConfig,theta_cur,F,controls,limits
-
 def getPsuedo(F,theta_cur):
     Blist,M,Tb0 = getConsts()
     T0e = mr.FKinBody(M,Blist,theta_cur)
 
     Ja = mr.JacobianBody(Blist,theta_cur)
-    F6 = np.array([0,0,F[0],F[1],F[2],0])
+    F6 = np.vstack([np.zeros(len(F[0])),np.zeros(len(F[0])),F[0],F[1],F[2],np.zeros(len(F[0]))])
     Jb = np.dot(np.dot(mr.Adjoint(np.linalg.inv(T0e)), \
                        mr.Adjoint(np.linalg.inv(Tb0))),\
                 F6)
     
-    Je = np.hstack(Jb,Ja)
+    Je = np.c_[Jb,Ja]
+    print('Je:',Je)
     pJe = np.dot(Je.T,np.linalg.inv(np.dot(Je,Je.T)))
     
     return pJe
 
 def FeedbackControl(X,Xd,Xdn,Kp,Ki,del_t,Xerr_int):
 
-    Xerr = mr.se3ToVec(m.log10(np.dot(np.linalg.inv(X),Xd)))
-    Xerr_int += Xerr*del_t
+    Xerr = mr.se3ToVec(mr.MatrixLog6(np.dot(np.linalg.inv(X),Xd)))
+    Xerr_int = np.add(Xerr_int,Xerr*del_t,out=Xerr_int,casting="unsafe")
 
-    Vd = (1/del_t)*m.log10(np.linalg.inv(Xd),Xdn)
+    Vd = mr.se3ToVec((1/del_t)*mr.MatrixLog6(np.dot(np.linalg.inv(Xd),Xdn)))
+    print('Vd:',Vd)
     Adxxd = np.dot(mr.Adjoint(np.linalg.inv(X)),mr.Adjoint(Xd))
+    print('Adxxd.Vd:',np.dot(Adxxd,Vd))
+    print('Xerr:',Xerr)
 
     V = np.dot(Adxxd,Vd) + np.dot(Kp,Xerr) + np.dot(Ki,Xerr_int)
 
     return V
     
 if __name__ == '__main__':
-    X,Kp,Ki,del_t,Xerr_int,curConfig,theta_cur,F,controls,limits = init(20,100)
+    ## when testing this, will probably remove init function and just do that code here in the executable
+
+    del_t = 0.01
+    limits = 10
+    controls = [0,0,0,0,0,0,0,0,0]
+    curConfig = [0,0,0,0,0,0.2,-1.6,0,0,0,0,0]
+
+    X,theta_cur,F = getActConfig(curConfig,controls,del_t,limits)
+    kp,ki = [0,0]
+
+    Kp = kp*np.identity(6)
+    Ki = ki*np.identity(6)
+    Xerr_int = np.array([0,0,0,0,0,0])
+    print('X:',X)
+
     trajectories = getRefTraj()
-    Xd,Xdn = getCurRef(trajectories,0)
+    #Xd,Xdn = getCurRef(trajectories,0)
+    Xd = np.array([[0,0,1,0.5],[0,1,0,0],[-1,0,0,0.5],[0,0,0,1]])
+    Xdn = np.array([[0,0,1,0.6],[0,1,0,0],[-1,0,0,0.3],[0,0,0,1]])
     V = FeedbackControl(X,Xd,Xdn,Kp,Ki,del_t,Xerr_int)
+    print('V:',V)
     pJe = getPsuedo(F,theta_cur)
     controls = np.dot(pJe,V)
+    print('Controls:',controls)
     curConfig = NS.NextState(curConfig,controls,del_t,limits)
+
+    
         
     
