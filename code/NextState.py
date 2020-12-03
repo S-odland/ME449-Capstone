@@ -94,11 +94,11 @@ def simControls(curConfig,controls,del_t,limits):
     return robotConfigs
 
 ## executable for function
-if __name__ == '__main__':
-    del_t = 0.01
-    limits = 10
-    controls = [0,0,0,0,0,-10,10,-10,10]
-    curConfig = [0,0,0,0,0,0,0,0,0,0,0,0]
-    line = simControls(curConfig,controls,del_t,limits)
-    writeCSV(line)
+# if __name__ == '__main__':
+#     del_t = 0.01
+#     limits = 10
+#     controls = [0,0,0,0,0,-10,10,-10,10]
+#     curConfig = [0,0,0,0,0,0,0,0,0,0,0,0]
+#     line = simControls(curConfig,controls,del_t,limits)
+#     writeCSV(line)
         

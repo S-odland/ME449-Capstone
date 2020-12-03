@@ -36,14 +36,13 @@ def getConsts():
 
 def writeCSV(line):
     data = pd.DataFrame(line)
-    data.to_csv("nextstate.csv",header=False,index=False)
+    data.to_csv("feedforward.csv",header=False,index=False)
 
 def getActConfig(curConfig,controls,del_t,limits):
     l = 0.47/2
     w = 0.3/2
     r = 0.0475
     theta_cur = np.array(curConfig[3:8])
-    print('theta:',theta_cur)
     phi,x,y = np.array(curConfig[0:3])
     F = (r/4)*np.array([[-1/(l+w), 1/(l+w), 1/(l+w),-1/(l+w)],[1, 1, 1, 1],[-1, 1, -1, 1]])
     Blist,M,Tb0 = getConsts()
@@ -57,21 +56,6 @@ def getActConfig(curConfig,controls,del_t,limits):
     X = np.dot(Tsb,np.dot(Tb0,T0e))
     return X,theta_cur,F
 
-def getRefTraj():
-    eOffset = 0.075
-    Tsc_initial = np.array([[1,0,0,1],[0,1,0,0],[0,0,1,0.025],[0,0,0,1]]) # initial configuration of cube
-    Tsc_final = np.array([[0,1,0,0],[-1,0,0,-1],[0,0,1,0.025],[0,0,0,1]]) # final configuration of cube
-    Tse_initial = np.array([[1,0,0,0],[0,1,0,0],[0,0,1,0.5],[0,0,0,1]]) # initial configuration of the gripper
-    Tce_standoff = np.array([[-0.7071,0,-0.7071,0],[0,1,0,0],[0.7071,0,-0.7071,eOffset],[0,0,0,1]]) # standoff configuration 
-    Tce_grip = np.array([[-0.7071,0,-0.7071,0],[0,1,0,0],[0.7071,0,-0.7071,0],[0,0,0,1]])
-    refTraj = TG.TrajectoryGenerator(Tsc_initial,Tsc_final,Tse_initial,Tce_standoff,Tce_grip)
-    return refTraj    
-
-def getCurRef(refTraj,i):
-    Xd = refTraj[i]
-    Xdn = refTraj[i+1]
-    return Xd,Xdn
-
 def getPsuedo(F,theta_cur):
     Blist,M,Tb0 = getConsts()
     T0e = mr.FKinBody(M,Blist,theta_cur)
@@ -81,9 +65,7 @@ def getPsuedo(F,theta_cur):
     Jb = np.dot(np.dot(mr.Adjoint(np.linalg.inv(T0e)), \
                        mr.Adjoint(np.linalg.inv(Tb0))),\
                 F6)
-    
     Je = np.c_[Jb,Ja]
-    print('Je:',Je)
     pJe = np.dot(Je.T,np.linalg.inv(np.dot(Je,Je.T)))
     
     return pJe
@@ -94,41 +76,33 @@ def FeedbackControl(X,Xd,Xdn,Kp,Ki,del_t,Xerr_int):
     Xerr_int = np.add(Xerr_int,Xerr*del_t,out=Xerr_int,casting="unsafe")
 
     Vd = mr.se3ToVec((1/del_t)*mr.MatrixLog6(np.dot(np.linalg.inv(Xd),Xdn)))
-    print('Vd:',Vd)
     Adxxd = np.dot(mr.Adjoint(np.linalg.inv(X)),mr.Adjoint(Xd))
-    print('Adxxd.Vd:',np.dot(Adxxd,Vd))
-    print('Xerr:',Xerr)
-
     V = np.dot(Adxxd,Vd) + np.dot(Kp,Xerr) + np.dot(Ki,Xerr_int)
 
-    return V
+    return V,Xerr,Xerr_int
+
     
-if __name__ == '__main__':
-    ## when testing this, will probably remove init function and just do that code here in the executable
+# if __name__ == '__main__':
+#     ## when testing this, will probably remove init function and just do that code here in the executable
 
-    del_t = 0.01
-    limits = 10
-    controls = [0,0,0,0,0,0,0,0,0]
-    curConfig = [0,0,0,0,0,0.2,-1.6,0,0,0,0,0]
+#     del_t = 0.01
+#     limits = 10
+#     controls = [0,0,0,0,0,0,0,0,0]
+#     curConfig = [0,0,0,0,0,0.2,-1.6,0,0,0,0,0]
 
-    X,theta_cur,F = getActConfig(curConfig,controls,del_t,limits)
-    kp,ki = [0,0]
+#     X,theta_cur,F = getActConfig(curConfig,controls,del_t,limits)
+#     kp,ki = [1,0]
 
-    Kp = kp*np.identity(6)
-    Ki = ki*np.identity(6)
-    Xerr_int = np.array([0,0,0,0,0,0])
-    print('X:',X)
+#     Kp = kp*np.identity(6)
+#     Ki = ki*np.identity(6)
+#     Xerr_int = np.array([0,0,0,0,0,0])
 
-    trajectories = getRefTraj()
-    #Xd,Xdn = getCurRef(trajectories,0)
-    Xd = np.array([[0,0,1,0.5],[0,1,0,0],[-1,0,0,0.5],[0,0,0,1]])
-    Xdn = np.array([[0,0,1,0.6],[0,1,0,0],[-1,0,0,0.3],[0,0,0,1]])
-    V = FeedbackControl(X,Xd,Xdn,Kp,Ki,del_t,Xerr_int)
-    print('V:',V)
-    pJe = getPsuedo(F,theta_cur)
-    controls = np.dot(pJe,V)
-    print('Controls:',controls)
-    curConfig = NS.NextState(curConfig,controls,del_t,limits)
+#     trajectories = getRefTraj()
+#     Xd,Xdn = getCurRef(trajectories,i)
+#     V = FeedbackControl(X,Xd,Xdn,Kp,Ki,del_t,Xerr_int)
+#     pJe = getPsuedo(F,theta_cur)
+#     controls = np.dot(pJe,V)
+#     curConfig = NS.NextState(curConfig,controls,del_t,limits)
 
     
         
