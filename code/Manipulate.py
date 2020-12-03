@@ -12,14 +12,21 @@ def writeCSV(line):
     data = pd.DataFrame(line)
     data.to_csv("manipulate.csv",header=False,index=False)
 
+def writeCSVmat(trajectories,grip_states):
+    f = open("trajectorygen.csv", "w") 
+    
+    for i in range(0,len(trajectories)):
+
+        T = trajectories[i]
+        trajectory = "%7.6f,%7.6f,%7.6f,%7.6f,%7.6f,%7.6f,%7.6f,%7.6f,%7.6f,%7.6f,%7.6f,%7.6f,%d\n" % \
+                                        (T[0][0],T[0][1],T[0][2],T[1][0],T[1][1],T[1][2],T[2][0],T[2][1],\
+                                          T[2][2],T[0][3],T[1][3],T[2][3],grip_states[i])
+
+        f.write(trajectory)
+    f.close()
+
 def getRefTraj():
-    eOffset = 0.075
-    Tsc_initial = np.array([[1,0,0,1],[0,1,0,0],[0,0,1,0.025],[0,0,0,1]]) # initial configuration of cube
-    Tsc_final = np.array([[0,1,0,0],[-1,0,0,-1],[0,0,1,0.025],[0,0,0,1]]) # final configuration of cube
-    Tse_initial = np.array([[0,0,1,0],[0,1,0,0],[-1,0,0,0.5],[0,0,0,1]]) # initial configuration of the gripper
-    Tce_standoff = np.array([[-0.7071,0,-0.7071,0],[0,1,0,0],[0.7071,0,-0.7071,eOffset],[0,0,0,1]]) # standoff configuration 
-    Tce_grip = np.array([[-0.7071,0,-0.7071,0],[0,1,0,0],[0.7071,0,-0.7071,0],[0,0,0,1]])
-    refTraj,grip_states = TG.TrajectoryGenerator(Tsc_initial,Tsc_final,Tse_initial,Tce_standoff,Tce_grip)
+    refTraj,grip_states = TG.TrajectoryGenerator()
     
     return refTraj,grip_states    
 
@@ -29,16 +36,21 @@ def getCurRef(refTraj,i):
     
     return Xd,Xdn
 
-def timeStep(curConfig,del_t,limits,controls,kp,ki,Xerr_int,i,trajectories):
-    X,theta_cur,F = FC.getActConfig(curConfig,controls,del_t,limits)
-    Kp = kp*np.identity(6)
-    Ki = ki*np.identity(6)
+def arrangeControls(con):
+    one = np.array(con[4:])
+    two = np.array(con[0:4])
+    controls = np.hstack([one,two])
+    return controls
+
+def timeStep(curConfig,del_t,limits,controls,Kp,Ki,Xerr_int,i,trajectories):
+    X,theta_cur,F = FC.getActConfig(curConfig)
     Xd,Xdn = getCurRef(trajectories,i)
     V,Xerr,Xerr_int = FC.FeedbackControl(X,Xd,Xdn,Kp,Ki,del_t,Xerr_int)
     pJe = FC.getPsuedo(F,theta_cur)
     controls = np.dot(pJe,V)
-    curConfig,F = NS.NextState(curConfig,controls,del_t,limits)
-    return curConfig,controls,Xerr,Xerr_int
+    controls = arrangeControls(controls)
+    curConfig = NS.NextState(curConfig,controls,del_t,limits)
+    return curConfig,controls,Xerr,Xerr_int,X
 
 def main():
     trajectories,grip_states = getRefTraj()
@@ -49,23 +61,32 @@ def main():
     robotConfigs = list(np.zeros(len(trajectories)-1))
     robotControls = list(np.zeros(len(trajectories)-1))
     robotErr = list(np.zeros(len(trajectories)-1))
+    endEfConfig = list(np.zeros(len(trajectories)-1))
+
+    Kp = kp*np.identity(6)
+    Ki = ki*np.identity(6)
 
     ## configuration format: [phi,x,y,j1,j2,j3,j4,j5,w1,w2,w3,w4,gripper state]
-    curConfig = [m.pi/3,0.2,0,0,0,0,0,0,0,0,0,0]
+    curConfig = [0,0,0,0,0,0,0,0,0,0,0,0]
     controls = np.array([0,0,0,0,0,0,0,0,0])
     Xerr = np.array([0,0,0,0,0,0])
     Xerr_int = np.array([0,0,0,0,0,0])
+    X = np.array([[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]])
 
     print('Generating animation CSV file')
     for i in range(len(trajectories)-1):
         robotConfigs[i] = curConfig
         robotControls[i] = controls 
         robotErr[i] = Xerr
-        curConfig,controls,Xerr,Xerr_int = timeStep(curConfig,del_t,limits,controls,kp,ki,Xerr_int,i,trajectories)
+        endEfConfig[i] = X
+        curConfig,controls,Xerr,Xerr_int,X = timeStep(curConfig,del_t,limits,controls,Kp,Ki,Xerr_int,i,trajectories)
+        
 
     for i in range(len(robotConfigs)):
         robotConfigs[i].append(grip_states[i])
     writeCSV(robotConfigs)
+    writeCSVmat(endEfConfig,grip_states)
+    print('Done.')
 
 if __name__ == '__main__':
     main()

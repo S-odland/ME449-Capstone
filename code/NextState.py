@@ -79,14 +79,14 @@ def NextState(curConfig,controls,del_t,limits):
     nextConfig = [list(q_next),list(nextJointConfig),list(nextWheelConfig)]
     nextState = list(itertools.chain(*nextConfig))
 
-    return nextState,F
+    return nextState
 
 ## 1 second simulation of states
 def simControls(curConfig,controls,del_t,limits):
     robotConfigs = list(np.zeros(int(1/del_t)))
     for i in range(0,int(1/del_t)):
         robotConfigs[i] = curConfig
-        curConfig,F = NextState(curConfig,controls,del_t,limits)
+        curConfig = NextState(curConfig,controls,del_t,limits)
 
     for i in range(len(robotConfigs)):
         robotConfigs[i].append(0)

@@ -38,7 +38,7 @@ def writeCSV(line):
     data = pd.DataFrame(line)
     data.to_csv("feedforward.csv",header=False,index=False)
 
-def getActConfig(curConfig,controls,del_t,limits):
+def getActConfig(curConfig):
     l = 0.47/2
     w = 0.3/2
     r = 0.0475
@@ -67,7 +67,9 @@ def getPsuedo(F,theta_cur):
                 F6)
     Je = np.c_[Jb,Ja]
     pJe = np.linalg.pinv(Je,0.001)
-    
+
+    # print('Je:',Je)
+    # print('theta:',theta_cur)
     return pJe
 
 def FeedbackControl(X,Xd,Xdn,Kp,Ki,del_t,Xerr_int):
@@ -79,31 +81,52 @@ def FeedbackControl(X,Xd,Xdn,Kp,Ki,del_t,Xerr_int):
     Adxxd = np.dot(mr.Adjoint(np.linalg.inv(X)),mr.Adjoint(Xd))
     V = np.dot(Adxxd,Vd) + np.dot(Kp,Xerr) + np.dot(Ki,Xerr_int)
 
+    # print('Vd:',Vd)
+    # print('Adxxd.Vd:',np.dot(Adxxd,Vd))
+    # print('Xerr:',Xerr)
+    # print('V:',V)
+
     return V,Xerr,Xerr_int
 
     
-# if __name__ == '__main__':
-#     ## when testing this, will probably remove init function and just do that code here in the executable
+if __name__ == '__main__':
+    ## when testing this, will probably remove init function and just do that code here in the executable
 
-#     del_t = 0.01
-#     limits = 10
-#     controls = [0,0,0,0,0,0,0,0,0]
-#     curConfig = [0,0,0,0,0,0.2,-1.6,0,0,0,0,0]
+    del_t = 0.01
+    limits = 10000
+    controls = [0,0,0,0,0,0,0,0,0]
+    curConfig = [0,0,0,0,0,0.2,-1.6,0,0,0,0,0]
+    robotConfigs = list(np.zeros(5))
 
-#     X,theta_cur,F = getActConfig(curConfig,controls,del_t,limits)
-#     kp,ki = [1,0]
+    kp,ki = [0,0]
 
-#     Kp = kp*np.identity(6)
-#     Ki = ki*np.identity(6)
-#     Xerr_int = np.array([0,0,0,0,0,0])
+    Kp = kp*np.identity(6)
+    Ki = ki*np.identity(6)
+    Xerr_int = np.array([0,0,0,0,0,0])
+    Xd = np.array([[0,0,1,0.5],[0,1,0,0],[-1,0,0,0.5],[0,0,0,1]])
+    Xdn = np.array([[0,0,1,0.6],[0,1,0,0],[-1,0,0,0.3],[0,0,0,1]])
 
-#     trajectories = getRefTraj()
-#     Xd,Xdn = getCurRef(trajectories,i)
-#     V = FeedbackControl(X,Xd,Xdn,Kp,Ki,del_t,Xerr_int)
-#     pJe = getPsuedo(F,theta_cur)
-#     controls = np.dot(pJe,V)
-#     curConfig = NS.NextState(curConfig,controls,del_t,limits)
+    for i in range(5):
+        robotConfigs[i] = curConfig
+        X,theta_cur,F = getActConfig(curConfig)
+        V,Xerr,Xerr_int = FeedbackControl(X,Xd,Xdn,Kp,Ki,del_t,Xerr_int)
+        pJe = getPsuedo(F,theta_cur)
 
+        con = np.dot(pJe,V)
+        one = np.array(con[4:])
+        two = np.array(con[0:4])
+        controls = np.hstack([one,two])
+
+        curConfig = NS.NextState(curConfig,controls,del_t,limits)
+        Xd = Xdn
+    
+    for i in range(len(robotConfigs)):
+        robotConfigs[i].append(0)
+    
+    writeCSV(robotConfigs)
+
+
+    
     
         
     
