@@ -57,7 +57,7 @@ def main():
     grip_states = list(grip_states)
     del_t = 0.01
     limits = 10
-    kp,ki = [0,0]
+    kp,ki = [20,100]
     robotConfigs = list(np.zeros(len(trajectories)-1))
     robotControls = list(np.zeros(len(trajectories)-1))
     robotErr = list(np.zeros(len(trajectories)-1))

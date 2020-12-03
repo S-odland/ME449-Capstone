@@ -89,7 +89,7 @@ def TrajectoryGenerator():
                                                                 Tse_gripFinal,Tse_gripFinal, Tse_standoffFinal])
     k = 1
     grip_states = [0]
-    t = np.array([4,1,1,1,8,1,1,1]) # durations for each segment of the total trajectory
+    t = np.array([2,0.5,0.5,0.5,4,0.5,0.5,0.5]) # durations for each segment of the total trajectory
     trajectories = []
     gState = 0
     
