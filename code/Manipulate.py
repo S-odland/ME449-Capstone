@@ -8,6 +8,31 @@ import NextState as NS
 import FeedforwardControl as FC
 import matplotlib
 
+## What to Simulate:
+##
+## Best, Overshoot, New Task
+## Best - the best result of the final project, i.e. gains that produce the best
+##        trajectory path (well tuned controller) - motion should be smooth with 
+##        no overshoot and very little error
+## Overshoot - a less well tuned controller that exhibits overshoot and a bit of 
+##             oscillation - error should be eliminated before the end of trajectory
+##             segment 1 -- likely to be feedforward+PI or just PI
+## New Task - the best controls of new initial and end configurations of the cube
+##
+## In all cases, the initial confiugration of the end effector shoudl have at least
+## 30 degrees of orientation error and 0.2 m of position error from the first config
+## of the reference trajectory
+##
+## What else to hand in:
+##
+## A plot of the Xerr through the simulated trajectory (PDF or jpg format)
+## A log file showing the program being called
+## Xerr data file
+## videos of the simulations described above
+## .csv vile for for each of the simulations described above
+
+## TODO: fix the initial configuration so that it doesnt automatically snap to the reference trajectory
+
 def writeCSV(line):
     data = pd.DataFrame(line)
     data.to_csv("manipulate.csv",header=False,index=False)
@@ -67,6 +92,10 @@ def main():
     Ki = ki*np.identity(6)
 
     ## configuration format: [phi,x,y,j1,j2,j3,j4,j5,w1,w2,w3,w4,gripper state]
+    ## adjust this config for 30 degrees error and 0.2 positional error
+    ## maybe create a function to do that for you?
+    ## also if we have time add joint limits -- will be good for future work
+    
     curConfig = [0,0,0,0,0,0,0,0,0,0,0,0]
     controls = np.array([0,0,0,0,0,0,0,0,0])
     Xerr = np.array([0,0,0,0,0,0])
@@ -90,3 +119,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+
