@@ -65,7 +65,7 @@ def InitTG():
     eOffset = 0.075
 
     Tsc_initial = np.array([[1,0,0,1],[0,1,0,0],[0,0,1,0.025],[0,0,0,1]]) # initial configuration of cube
-    Tsc_final = np.array([[0,1,0,0],[-1,0,0,-1],[0,0,1,0.025],[0,0,0,1]]) # final configuration of cube
+    Tsc_final = np.array([[0,1,0,2.25],[-1,0,0,-0.25],[0,0,1,0.025],[0,0,0,1]]) # final configuration of cube
     Tse_initial = np.array([[0,0,1,0],[0,1,0,0],[-1,0,0,0.5],[0,0,0,1]]) # initial configuration of the gripper
     Tce_standoff = np.array([[-0.7071,0,0.7071,0],[0,1,0,0],[-0.7071,0,-0.7071,eOffset],[0,0,0,1]]) # standoff configuration 
     Tce_grip = np.array([[-0.7071,0,0.7071,0],[0,1,0,0],[-0.7071,0,-0.7071,0],[0,0,0,1]])
@@ -89,7 +89,7 @@ def TrajectoryGenerator():
                                                                 Tse_gripFinal,Tse_gripFinal, Tse_standoffFinal])
     k = 1
     grip_states = [0]
-    t = np.array([2,0.5,0.5,0.5,4,0.5,0.5,0.5]) # durations for each segment of the total trajectory
+    t = np.array([4,1,1,1,8,1,1,1]) # durations for each segment of the total trajectory
     trajectories = []
     gState = 0
     

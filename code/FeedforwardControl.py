@@ -77,7 +77,8 @@ def getPsuedo(F,theta_cur):
 def FeedbackControl(X,Xd,Xdn,Kp,Ki,del_t,Xerr_int):
 
     Xerr = mr.se3ToVec(mr.MatrixLog6(np.dot(np.linalg.inv(X),Xd)))
-    Xerr_int = np.add(Xerr_int,Xerr*del_t,out=Xerr_int,casting="unsafe")
+    for i in range(6):
+        Xerr_int[i] = Xerr_int[i] + Xerr[i]*del_t
 
     Vd = mr.se3ToVec((1/del_t)*mr.MatrixLog6(np.dot(np.linalg.inv(Xd),Xdn)))
     Adxxd = np.dot(mr.Adjoint(np.linalg.inv(X)),mr.Adjoint(Xd))

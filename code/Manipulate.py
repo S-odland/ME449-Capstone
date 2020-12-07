@@ -6,7 +6,7 @@ import itertools
 import TrajectoryGenerator as TG
 import NextState as NS
 import FeedforwardControl as FC
-import matplotlib
+import matplotlib.pyplot as plt
 
 ## What to Simulate:
 ##
@@ -68,17 +68,17 @@ def arrangeControls(con):
     return controls
 
 def timeStep(curConfig,del_t,limits,controls,Kp,Ki,Xerr_int,i,trajectories):
-    err_joints = testJointLimits(curConfig,del_t,limits,controls,Kp,Ki,Xerr_int,i,trajectories)
+    #err_joints = testJointLimits(curConfig,del_t,limits,controls,Kp,Ki,Xerr_int,i,trajectories)
 
     X,theta_cur,F = FC.getActConfig(curConfig)
     Xd,Xdn = getCurRef(trajectories,i)
     V,Xerr,Xerr_int = FC.FeedbackControl(X,Xd,Xdn,Kp,Ki,del_t,Xerr_int)
 
     pJe,Ja,Jb = FC.getPsuedo(F,theta_cur)
-    for i in range(5):
-        if err_joints[i] == 1:
-            Ja[:,i] = 0
-    pJe = np.linalg.pinv(np.c_[Jb,Ja],0.001)
+    # for i in range(5):
+    #     if err_joints[i] == 1:
+    #         Ja[:,i] = 0                   
+    # pJe = np.linalg.pinv(np.c_[Jb,Ja],0.001)
 
     controls = np.dot(pJe,V)
     controls = arrangeControls(controls)
@@ -86,27 +86,56 @@ def timeStep(curConfig,del_t,limits,controls,Kp,Ki,Xerr_int,i,trajectories):
     return curConfig,controls,Xerr,Xerr_int,X
 
 def testJointLimits(curConfig,del_t,limits,controls,Kp,Ki,Xerr_int,i,trajectories):
-    curConfig,controls,Xerr,Xerr_int,X = timeStep(curConfig,del_t,limits,controls,Kp,Ki,Xerr_int,i,trajectories)
+    ## have to write out all these steps even though they are in timeStep to avoid recursion error
+    X,theta_cur,F = FC.getActConfig(curConfig)
+    Xd,Xdn = getCurRef(trajectories,i)
+    V,Xerr,Xerr_int = FC.FeedbackControl(X,Xd,Xdn,Kp,Ki,del_t,Xerr_int)
+    pJe,Ja,Jb = FC.getPsuedo(F,theta_cur)
+    controls = np.dot(pJe,V)
+    controls = arrangeControls(controls)
+    curConfig = NS.NextState(curConfig,controls,del_t,limits)
+
     curJointConfig = np.array(curConfig[3:8])
     j1,j2,j3,j4,j5 = curJointConfig
 
     err_joints = [0,0,0,0,0]
 
-    if j2 + j3 < -3.514:
-        if j4 < 1: err_joints[3] = 1
-        else: err_joints[2] = 1
+    if j3 < -3.514:
+        if j4 < 1: 
+            err_joints[3] = 1
+            err_joints[2] = 1
     elif  j2 + j3 > 1.853:
-        if j4 > 0: err_joints[3] = 1
-        else: err_joints[2] = 1
+        if j4 > 0: 
+            err_joints[3] = 1
+            err_joints[2] = 1
     
+    if j2 < -1.117 or j2 > 1.553:
+        err_joints[1] = 1
+    if j3 > 2.53 or j3 < -2.62:
+        err_joints[2] = 1
+    if j4 < -1.78 or j4 > 1.78:
+        err_joints[3] = 1
+
     return err_joints
+
+def plotErr(err):
+    e = np.array([0,0,0,0,0,0])
+    for i in range(len(err)):
+        e = np.vstack([e,err[i]])
+    e = e.T
+    plt.plot(e[0,1:400],'r',e[1,1:400],'b',e[2,1:400],'g',e[3,1:400],'y',e[4,1:400],'m')
+    plt.xlabel('Time')
+    plt.ylabel('Joint Error (radians)')
+    plt.title('Joint Error for Four Seconds')
+    
+    plt.show()
 
 def main():
     trajectories,grip_states = getRefTraj()
     grip_states = list(grip_states)
     del_t = 0.01
-    limits = 10
-    kp,ki = [20,100]
+    limits = 100
+    kp,ki = [5,5]
     robotConfigs = list(np.zeros(len(trajectories)-1))
     robotControls = list(np.zeros(len(trajectories)-1))
     robotErr = list(np.zeros(len(trajectories)-1))
@@ -118,8 +147,9 @@ def main():
     ## configuration format: [phi,x,y,j1,j2,j3,j4,j5,w1,w2,w3,w4,gripper state]
     ## adjust this config for 30 degrees error and 0.2 positional error
 
-    curConfig = [0,0,0,-0.0816,0.0305,2.276,-2.849,0.081,0,0,0,0] ## initial configuration found through inverse kinematics (newton-raphsom method)
+    curConfig = [0,0,0,0.6,1.128,-0.598,-2.101,-0.3,0,0,0,0] ## initial configuration found through inverse kinematics (newton-raphsom method)
     controls = np.array([0,0,0,0,0,0,0,0,0])
+    Xerr_int = np.array([0,0,0,0,0,0])
 
     print('Generating animation CSV file')
     for i in range(len(trajectories)-1):
@@ -132,8 +162,10 @@ def main():
     for i in range(len(robotConfigs)):
         robotConfigs[i].append(grip_states[i])
     writeCSV(robotConfigs)
-    writeCSVmat(endEfConfig,grip_states)
-    print('Done.')
+    print('Plotting Joint Error')
+    #print(robotErr[:,0])
+    plotErr(robotErr)
+    print('Done')
 
 if __name__ == '__main__':
     main()
