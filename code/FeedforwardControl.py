@@ -7,6 +7,7 @@ import pandas as pd
 import itertools
 import TrajectoryGenerator as TG
 import NextState as NS
+import Manipulate as MP
 
 ## V(t) = [Adx-1xd]Vd(t) + KpXerr(t) + Ki [Xerr(t)dt]0-->t
 
@@ -66,11 +67,12 @@ def getPsuedo(F,theta_cur):
                        mr.Adjoint(np.linalg.inv(Tb0))),\
                 F6)
     Je = np.c_[Jb,Ja]
+    
     pJe = np.linalg.pinv(Je,0.001)
 
     # print('Je:',Je)
     # print('theta:',theta_cur)
-    return pJe
+    return pJe,Ja,Jb
 
 def FeedbackControl(X,Xd,Xdn,Kp,Ki,del_t,Xerr_int):
 
@@ -110,7 +112,7 @@ if __name__ == '__main__':
         robotConfigs[i] = curConfig
         X,theta_cur,F = getActConfig(curConfig)
         V,Xerr,Xerr_int = FeedbackControl(X,Xd,Xdn,Kp,Ki,del_t,Xerr_int)
-        pJe = getPsuedo(F,theta_cur)
+        pJe,Ja,Jb = getPsuedo(F,theta_cur)
 
         con = np.dot(pJe,V)
         one = np.array(con[4:])

@@ -68,14 +68,38 @@ def arrangeControls(con):
     return controls
 
 def timeStep(curConfig,del_t,limits,controls,Kp,Ki,Xerr_int,i,trajectories):
+    err_joints = testJointLimits(curConfig,del_t,limits,controls,Kp,Ki,Xerr_int,i,trajectories)
+
     X,theta_cur,F = FC.getActConfig(curConfig)
     Xd,Xdn = getCurRef(trajectories,i)
     V,Xerr,Xerr_int = FC.FeedbackControl(X,Xd,Xdn,Kp,Ki,del_t,Xerr_int)
-    pJe = FC.getPsuedo(F,theta_cur)
+
+    pJe,Ja,Jb = FC.getPsuedo(F,theta_cur)
+    for i in range(5):
+        if err_joints[i] == 1:
+            Ja[:,i] = 0
+    pJe = np.linalg.pinv(np.c_[Jb,Ja],0.001)
+
     controls = np.dot(pJe,V)
     controls = arrangeControls(controls)
     curConfig = NS.NextState(curConfig,controls,del_t,limits)
     return curConfig,controls,Xerr,Xerr_int,X
+
+def testJointLimits(curConfig,del_t,limits,controls,Kp,Ki,Xerr_int,i,trajectories):
+    curConfig,controls,Xerr,Xerr_int,X = timeStep(curConfig,del_t,limits,controls,Kp,Ki,Xerr_int,i,trajectories)
+    curJointConfig = np.array(curConfig[3:8])
+    j1,j2,j3,j4,j5 = curJointConfig
+
+    err_joints = [0,0,0,0,0]
+
+    if j2 + j3 < -3.514:
+        if j4 < 1: err_joints[3] = 1
+        else: err_joints[2] = 1
+    elif  j2 + j3 > 1.853:
+        if j4 > 0: err_joints[3] = 1
+        else: err_joints[2] = 1
+    
+    return err_joints
 
 def main():
     trajectories,grip_states = getRefTraj()
@@ -93,23 +117,17 @@ def main():
 
     ## configuration format: [phi,x,y,j1,j2,j3,j4,j5,w1,w2,w3,w4,gripper state]
     ## adjust this config for 30 degrees error and 0.2 positional error
-    ## maybe create a function to do that for you?
-    ## also if we have time add joint limits -- will be good for future work
-    
-    curConfig = [0,0,0,0,0,0,0,0,0,0,0,0]
+
+    curConfig = [0,0,0,-0.0816,0.0305,2.276,-2.849,0.081,0,0,0,0] ## initial configuration found through inverse kinematics (newton-raphsom method)
     controls = np.array([0,0,0,0,0,0,0,0,0])
-    Xerr = np.array([0,0,0,0,0,0])
-    Xerr_int = np.array([0,0,0,0,0,0])
-    X = np.array([[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]])
 
     print('Generating animation CSV file')
     for i in range(len(trajectories)-1):
         robotConfigs[i] = curConfig
+        curConfig,controls,Xerr,Xerr_int,X = timeStep(curConfig,del_t,limits,controls,Kp,Ki,Xerr_int,i,trajectories)
         robotControls[i] = controls 
         robotErr[i] = Xerr
         endEfConfig[i] = X
-        curConfig,controls,Xerr,Xerr_int,X = timeStep(curConfig,del_t,limits,controls,Kp,Ki,Xerr_int,i,trajectories)
-        
 
     for i in range(len(robotConfigs)):
         robotConfigs[i].append(grip_states[i])
