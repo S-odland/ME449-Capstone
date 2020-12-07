@@ -3,6 +3,8 @@ Final Capstone Project of ME449 Introduction to Robotic Manipulation
 
 General assignments of ME449 can be found [here](https://github.com/S-odland/ME449-RoboticManipulation)
 
+I never ended up getting overshoot to work, However good gains should have be kd = 20 and ki = 400 for overshoot which would have exhibited oscillation. Anyways this is what I've got
+
 ### youBot Kinematics Simulator and csv output
 * The code for this section is in NextState.py and contains three functions:
   * writeCSV(): writes a .csv file
