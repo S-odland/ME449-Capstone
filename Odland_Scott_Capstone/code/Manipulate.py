@@ -153,16 +153,17 @@ def main():
 
     curConfig = [0,0,0,0.6,1.128,-0.598,-2.101,-0.3,0,0,0,0] ## initial configuration found through inverse kinematics (newton-raphsom method)
     controls = np.array([0,0,0,0,0,0,0,0,0])
-    Xerr_int = np.array([0,0,0,0,0,0])
+    Xerr_int = np.array([0.0,0.0,0.0,0.0,0.0,0.0])
 
     print('Generating animation CSV file')
     for i in range(len(trajectories)-1):
         robotConfigs[i] = curConfig
+        
         curConfig,controls,Xerr,Xerr_int,X = timeStep(curConfig,del_t,limits,controls,Kp,Ki,Xerr_int,i,trajectories)
         robotControls[i] = controls 
         robotErr[i] = Xerr
         endEfConfig[i] = X
-
+    print(Xerr_int)
     for i in range(len(robotConfigs)):
         robotConfigs[i].append(grip_states[i])
     writeCSV(robotConfigs)
